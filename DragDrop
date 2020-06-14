@@ -1,0 +1,95 @@
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class DragDrop : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IEndDragHandler, IDragHandler {
+
+    [SerializeField] private Canvas canvas;
+
+    private RectTransform rectTransform;
+    private CanvasGroup canvasGroup;
+    private Vector2 startPos;
+    public GameObject parent;
+    public GameObject tempParent;
+
+    public int buildCost;
+
+    public string buildingName;
+
+    //sometimes it happens that the building is a bit off, add this Vector3 to the position in the inspector while creating prefab| use - or + on x for hori-left/right
+    //use + or - on y for up/down etc. Don't touch z unless necessary.
+
+    //Leave all values at zero if you don't want to alter it
+    public Vector3 offSet;
+
+    private void Awake() {
+        rectTransform = GetComponent<RectTransform>();
+        canvasGroup = GetComponent<CanvasGroup>();
+        startPos = GetComponent<RectTransform>().anchoredPosition;
+        tempParent = GameObject.Find("Canvas");
+        parent = GameObject.Find("UI/Canvas/BuildAll/Viewport/Content");
+    }
+
+    public void OnBeginDrag(PointerEventData eventData) {
+        canvasGroup.alpha = .6f;
+        canvasGroup.blocksRaycasts = false;
+        this.transform.SetParent(tempParent.transform, true);
+    }
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        //CamTouchMove.interactUI = true;
+    }
+
+    public void OnDrag(PointerEventData eventData) {
+        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+        //IStart();
+    }
+
+    public void OnEndDrag(PointerEventData eventData) {
+        canvasGroup.alpha = 1f;
+        canvasGroup.blocksRaycasts = true;
+        this.transform.SetParent(parent.transform, true);
+        this.rectTransform.anchoredPosition = startPos;
+        CastRay();
+    }
+
+    public void OnPointerDown(PointerEventData eventData) {
+
+    }
+
+    public void IStart()
+    {
+        CamTouchMove.interactUI = true;
+    }
+    public void IStop()
+    {
+        CamTouchMove.interactUI = false;
+    }
+
+    void CastRay()
+    {
+        Debug.Log("Ray");
+        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+        if (hit.transform != null && hit.transform.CompareTag("BuildArea"))
+        {
+            int _money = GameObject.Find("ScoreTracker").GetComponent<Score>().money;
+            Debug.Log(hit.collider.name);
+            if (_money >= buildCost)
+            {
+                GameObject _buildingSpawn = Instantiate(Resources.Load("Buildings/" + buildingName) as GameObject);
+                _buildingSpawn.transform.position = hit.collider.transform.position;
+                hit.collider.gameObject.SetActive(false);
+
+                //set the layer matching the buildarea + 1
+                _buildingSpawn.GetComponentInChildren<SpriteRenderer>().sortingOrder = hit.collider.GetComponentInChildren<SpriteRenderer>().sortingOrder + 1;
+            }
+            else
+            {
+                Debug.Log("Insufficient Money");
+            }
+
+        }
+    }
+}
