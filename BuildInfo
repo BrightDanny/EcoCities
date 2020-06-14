@@ -1,0 +1,72 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class BuildInfo : MonoBehaviour
+{
+    //name
+    public string nameBuilding;
+
+    //type
+    public string type;
+
+    //energy cost or value
+    public int energyCost;
+    public int energyValue;
+
+    //Money
+    public int moneyCost;
+
+    //PPP points
+    public int planetPoints;
+    public int peoplePoints;
+    public int productionPoints;
+
+    //Find score tracker
+    public Score scoreUpdate;
+
+    //Generates money?
+    public int moneyGeneration;
+
+    //sometimes it happens that the building is a bit off, add this Vector3 to the position in the inspector while creating prefab| use - or + on x for hori-left/right
+    //use + or - on y for up/down etc. Don't touch z unless necessary.
+
+    //Leave all values at zero if you don't want to alter it
+    public Vector3 offSet;
+
+    //position of this object
+    public Transform pos;
+
+    void Start()
+    {
+        this.name = nameBuilding;
+        scoreUpdate = GameObject.Find("ScoreTracker").GetComponent<Score>();
+        //addscore
+        AddScore(energyCost, energyValue, planetPoints, peoplePoints, productionPoints, moneyCost);
+        //start coroutine
+        StartCoroutine("GenerateMoney");
+        //offsetter
+        this.transform.position = this.transform.position + offSet;
+        //position
+        pos = this.transform;
+    }
+
+    private void AddScore(int eCost, int eValue, int plaPoints, int peoPoints, int proPoints, int mCost)
+    {
+        Debug.Log(eCost + " " + eValue + " " + plaPoints + " " + peoPoints + " " + proPoints + " " + mCost);
+        scoreUpdate.UpdateScore(eCost, eValue, plaPoints, peoPoints, proPoints, mCost);
+    }
+
+    IEnumerator GenerateMoney()
+    {
+        while(moneyGeneration > 0) 
+        {
+            yield return new WaitForSeconds(20f);
+            Debug.Log(this.gameObject.name + " generated " + moneyGeneration);
+            GameObject _item = Instantiate(Resources.Load("Money") as GameObject);
+            _item.transform.position = new Vector3(pos.position.x + Random.Range(-0.5f, 0.5f), pos.position.y + Random.Range(-0.5f, 0.5f), 0);
+            _item.GetComponent<ItemValue>().moneyValue = moneyGeneration;
+        }
+    }
+}
